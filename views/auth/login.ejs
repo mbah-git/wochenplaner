@@ -1,0 +1,21 @@
+<%- include('../partials/header') %>
+<section class="card narrow auth">
+  <h1>Anmelden</h1>
+  <p class="muted">Plane eure Woche, sammle Rezepte und kauf entspannt ein.</p>
+  <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+  <form method="post" action="<%= base %>/login" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>E-Mail
+      <input type="email" name="email" value="<%= email %>" required autocomplete="username" autofocus>
+    </label>
+    <label>Passwort
+      <input type="password" name="password" required autocomplete="current-password">
+    </label>
+    <button type="submit" class="btn btn-primary btn-block">Anmelden</button>
+  </form>
+  <p class="muted center"><a href="<%= base %>/forgot-password">Passwort vergessen?</a></p>
+  <% if (allowRegistration) { %>
+    <p class="muted center">Noch kein Konto? <a href="<%= base %>/register">Jetzt registrieren</a></p>
+  <% } %>
+</section>
+<%- include('../partials/footer') %>

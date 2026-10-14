@@ -1,0 +1,47 @@
+<%- include('../partials/header') %>
+<div class="week-head">
+  <a class="btn btn-icon" href="<%= base %>/plan?week=<%= week.prev %>" aria-label="Vorherige Woche">‹</a>
+  <div class="week-title">
+    <h1><%= week.relative || 'KW ' + week.number %></h1>
+    <p class="muted"><%= week.relative ? 'KW ' + week.number + ' · ' : '' %><%= week.label %></p>
+  </div>
+  <a class="btn btn-icon" href="<%= base %>/plan?week=<%= week.next %>" aria-label="Nächste Woche">›</a>
+</div>
+<div class="week-actions">
+  <% if (!week.isCurrent) { %><a class="btn btn-sm" href="<%= base %>/plan">Heute</a><% } %>
+  <a class="btn btn-sm" href="<%= base %>/shopping?week=<%= week.start %>">Einkaufsliste</a>
+  <form method="post" action="<%= base %>/plan/copy-previous" data-confirm="Leere Plätze dieser Woche mit den Mahlzeiten der Vorwoche füllen?">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="week" value="<%= week.start %>">
+    <button type="submit" class="btn btn-sm btn-ghost">Vorwoche übernehmen</button>
+  </form>
+</div>
+
+<div class="week-grid">
+  <% days.forEach(function (day) { %>
+    <section class="card day <%= day.isToday ? 'today' : '' %> <%= day.isPast ? 'past' : '' %>" <%= day.isToday ? 'id=heute' : '' %>>
+      <h2 class="day-title"><span><%= day.name %></span> <span class="muted small"><%= day.dayMonth %><%= day.isToday ? ' · heute' : '' %></span></h2>
+      <% day.meals.forEach(function (m) { const e = m.entry; %>
+        <a class="meal <%= e ? '' : 'meal-empty' %>" href="<%= base %>/plan/<%= day.iso %>/<%= m.slot.key %>">
+          <span class="meal-slot"><%= m.slot.short %></span>
+          <% if (!e) { %>
+            <span class="meal-name muted">+ planen</span>
+          <% } else { %>
+            <span class="meal-body">
+              <span class="meal-name"><%= e.recipe_name || e.note %></span>
+              <% if (e.recipe_name && (e.note || e.servings)) { %>
+                <span class="muted small"><%= [e.servings ? e.servings + ' Portionen' : null, e.note].filter(Boolean).join(' · ') %></span>
+              <% } else if (!e.recipe_name) { %>
+                <span class="muted small">Freitext</span>
+              <% } %>
+            </span>
+          <% } %>
+        </a>
+      <% }) %>
+    </section>
+  <% }) %>
+</div>
+<% if (!planned) { %>
+  <p class="muted center week-empty">Noch nichts geplant. Tippe auf einen Tag oder plane direkt aus einem <a href="<%= base %>/recipes">Rezept</a>.</p>
+<% } %>
+<%- include('../partials/footer') %>

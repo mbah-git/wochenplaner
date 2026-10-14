@@ -1,0 +1,105 @@
+<%- include('../partials/header') %>
+<% const extra = fromToday ? '&from=today' : ''; %>
+<div class="week-head">
+  <a class="btn btn-icon" href="<%= base %>/shopping?week=<%= week.prev %>" aria-label="Vorherige Woche">‹</a>
+  <div class="week-title">
+    <h1>Einkaufsliste</h1>
+    <p class="muted"><%= week.relative ? week.relative + ' · ' : '' %>KW <%= week.number %> · <%= week.label %></p>
+  </div>
+  <a class="btn btn-icon" href="<%= base %>/shopping?week=<%= week.next %>" aria-label="Nächste Woche">›</a>
+</div>
+
+<form method="post" action="<%= base %>/shopping/items" class="card add-item" data-keep-focus>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="week" value="<%= week.start %>">
+  <% if (fromToday) { %><input type="hidden" name="from" value="today"><% } %>
+  <label class="grow"><span class="sr-only">Eintrag</span>
+    <input type="text" name="name" required maxlength="120" placeholder="Eintrag hinzufügen, z. B. 2 l Milch" autocomplete="off" enterkeyhint="done">
+  </label>
+  <button type="submit" class="btn btn-primary">Hinzufügen</button>
+</form>
+
+<div class="list-toolbar">
+  <span class="muted small" id="openCount" data-open="<%= list.open %>" data-total="<%= list.total %>">
+    <%= list.open %> von <%= list.total %> offen<% if (list.mealCount) { %> · aus <%= list.mealCount %> Mahlzeit<%= list.mealCount === 1 ? '' : 'en' %><% } %>
+  </span>
+  <div class="toolbar-actions">
+    <% if (canFilterToday) { %>
+      <a class="btn btn-sm <%= fromToday ? 'btn-active' : '' %>" href="<%= base %>/shopping?week=<%= week.start %><%= fromToday ? '' : '&from=today' %>" title="Nur Mahlzeiten ab heute berücksichtigen">Ab heute</a>
+    <% } %>
+    <button type="button" class="btn btn-sm" id="hideChecked" aria-pressed="false">Erledigte ausblenden</button>
+    <a class="btn btn-sm <%= editMode ? 'btn-active' : '' %>" href="<%= base %>/shopping?week=<%= week.start %><%= editMode ? '' : '&edit=1' %><%= extra %>"><%= editMode ? 'Fertig' : 'Bearbeiten' %></a>
+  </div>
+</div>
+
+<% if (!list.total) { %>
+  <section class="card empty center">
+    <h2>Die Liste ist leer</h2>
+    <p class="muted">Plane Mahlzeiten mit Rezepten im <a href="<%= base %>/plan?week=<%= week.start %>">Wochenplan</a>, dann erscheinen die Zutaten hier automatisch. Eigene Einträge kannst du oben hinzufügen.</p>
+  </section>
+<% } else { %>
+  <div class="shopping" id="shoppingList">
+    <% list.groups.forEach(function (g) { %>
+      <section class="card shop-group">
+        <h2 class="shop-cat"><%= g.label %></h2>
+        <ul class="shop-items">
+          <% g.items.forEach(function (i) { %>
+            <li class="shop-item <%= i.checked ? 'is-checked' : '' %>">
+              <form method="post" action="<%= base %>/shopping/<%= i.type === 'auto' ? 'check' : 'items/' + i.id + '/toggle' %>" class="check-form">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="week" value="<%= week.start %>">
+                <% if (fromToday) { %><input type="hidden" name="from" value="today"><% } %>
+                <% if (i.type === 'auto') { %><input type="hidden" name="key" value="<%= i.key %>"><% } %>
+                <input type="hidden" name="checked" value="<%= i.checked ? '0' : '1' %>">
+                <button type="submit" class="check-row" role="checkbox" aria-checked="<%= i.checked ? 'true' : 'false' %>">
+                  <span class="box" aria-hidden="true"></span>
+                  <span class="item-text">
+                    <span class="item-name"><%= i.name %></span>
+                    <% if (i.amount) { %><span class="item-amount"><%= i.amount %></span><% } %>
+                    <% if (i.sources.length) { %><span class="item-source muted"><%= i.sources.join(', ') %></span><% } %>
+                  </span>
+                </button>
+              </form>
+              <% if (editMode) { %>
+                <div class="item-edit">
+                  <form method="post" action="<%= base %>/shopping/category" class="inline-form">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="week" value="<%= week.start %>">
+                    <% if (i.type === 'auto') { %><input type="hidden" name="key" value="<%= i.key %>"><% } else { %><input type="hidden" name="item_id" value="<%= i.id %>"><% } %>
+                    <select name="category" data-autosubmit aria-label="Kategorie von <%= i.name %>">
+                      <% categories.forEach(function (c) { %><option value="<%= c.key %>" <%= c.key === i.category ? 'selected' : '' %>><%= c.label %></option><% }) %>
+                    </select>
+                  </form>
+                  <% if (i.type === 'custom') { %>
+                    <form method="post" action="<%= base %>/shopping/items/<%= i.id %>/delete" class="inline-form">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="week" value="<%= week.start %>">
+                      <button type="submit" class="btn btn-sm btn-danger" aria-label="<%= i.name %> löschen">✕</button>
+                    </form>
+                  <% } %>
+                </div>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+      </section>
+    <% }) %>
+  </div>
+
+  <div class="list-footer">
+    <form method="post" action="<%= base %>/shopping/reset" data-confirm="Alle Haken dieser Woche entfernen?">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="week" value="<%= week.start %>">
+      <button type="submit" class="btn btn-sm btn-ghost">Alle Haken entfernen</button>
+    </form>
+    <form method="post" action="<%= base %>/shopping/clear-checked" data-confirm="Abgehakte eigene Einträge löschen?">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="week" value="<%= week.start %>">
+      <button type="submit" class="btn btn-sm btn-ghost">Abgehakte eigene Einträge löschen</button>
+    </form>
+  </div>
+  <% if (editMode) { %>
+    <p class="muted small center">Geänderte Kategorien merkt sich der Haushalt auch für die nächsten Wochen.</p>
+  <% } %>
+<% } %>
+<%- include('../partials/footer') %>

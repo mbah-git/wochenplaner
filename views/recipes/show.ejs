@@ -1,0 +1,81 @@
+<%- include('../partials/header') %>
+<% const steps = String(recipe.instructions || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean); %>
+<div class="page-head">
+  <div>
+    <p class="crumb"><a href="<%= base %>/recipes">← Rezepte</a></p>
+    <h1><%= recipe.name %></h1>
+    <% if (fmt.tagList(recipe.tags).length) { %>
+      <p class="tags"><% fmt.tagList(recipe.tags).forEach(function (t) { %><a class="badge" href="<%= base %>/recipes?tag=<%= encodeURIComponent(t) %>"><%= t %></a> <% }) %></p>
+    <% } %>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="<%= base %>/recipes/<%= recipe.id %>/edit">Bearbeiten</a>
+    <form method="post" action="<%= base %>/recipes/<%= recipe.id %>/delete" data-confirm="„<%= recipe.name %>“ wirklich löschen? Geplante Mahlzeiten bleiben als Freitext stehen.">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn-danger">Löschen</button>
+    </form>
+  </div>
+</div>
+
+<div class="recipe-layout">
+  <section class="card">
+    <div class="card-head">
+      <h2>Zutaten</h2>
+      <label class="servings-control">
+        <span>Portionen</span>
+        <input type="number" min="1" max="50" value="<%= recipe.servings %>" data-servings="<%= recipe.servings %>" inputmode="numeric">
+      </label>
+    </div>
+    <% if (!recipe.ingredients.length) { %>
+      <p class="muted">Keine Zutaten erfasst.</p>
+    <% } else { %>
+      <ul class="ingredients">
+        <% recipe.ingredients.forEach(function (i) { %>
+          <li>
+            <span class="qty" <% if (i.quantity !== null) { %>data-qty="<%= i.quantity %>" data-unit="<%= i.unit || '' %>"<% } %>><%= fmt.amount(i.quantity, i.unit) %></span>
+            <span><%= i.name %></span>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </section>
+
+  <section class="card">
+    <h2>Einplanen</h2>
+    <form method="post" action="<%= base %>/plan/assign" class="form form-compact">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="recipe_id" value="<%= recipe.id %>">
+      <div class="form-row">
+        <label>Tag
+          <select name="date" required>
+            <% days.forEach(function (d) { %><option value="<%= d.iso %>"><%= d.label %></option><% }) %>
+          </select>
+        </label>
+        <label>Mahlzeit
+          <select name="slot">
+            <% slots.forEach(function (s) { %><option value="<%= s.key %>" <%= s.key === 'dinner' ? 'selected' : '' %>><%= s.label %></option><% }) %>
+          </select>
+        </label>
+      </div>
+      <button type="submit" class="btn btn-primary">In den Wochenplan</button>
+    </form>
+    <% if (planned.length) { %>
+      <p class="muted small planned-list">Geplant: <%= planned.map(function (p) { return fmt.date(p.plan_date) + ' (' + p.slotLabel + ')'; }).join(', ') %></p>
+    <% } %>
+    <% if (recipe.source_url) { %>
+      <p class="source">Quelle: <a href="<%= recipe.source_url %>" target="_blank" rel="noopener noreferrer nofollow"><%= fmt.hostOf(recipe.source_url) %> ↗</a></p>
+    <% } %>
+  </section>
+
+  <section class="card recipe-steps">
+    <h2>Zubereitung</h2>
+    <% if (!steps.length) { %>
+      <p class="muted">Keine Zubereitung erfasst.</p>
+    <% } else { %>
+      <ol class="steps">
+        <% steps.forEach(function (s) { %><li><%= s.replace(/^\d+[.)]\s*/, '') %></li><% }) %>
+      </ol>
+    <% } %>
+  </section>
+</div>
+<%- include('../partials/footer') %>

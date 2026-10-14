@@ -1,0 +1,64 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <h1>Rezepte</h1>
+    <p class="muted"><%= total %> Rezept<%= total === 1 ? '' : 'e' %> im Haushalt</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-primary" href="<%= base %>/recipes/new">+ Neues Rezept</a>
+  </div>
+</div>
+
+<% if (!total) { %>
+  <section class="card empty center">
+    <h2>Noch keine Rezepte</h2>
+    <p class="muted">Lege dein erstes Rezept an. Zutaten schreibst du einfach Zeile für Zeile, z. B. „200 g Spaghetti“.</p>
+    <a class="btn btn-primary" href="<%= base %>/recipes/new">Rezept anlegen</a>
+  </section>
+<% } else { %>
+  <form method="get" action="<%= base %>/recipes" class="card filter-bar">
+    <label class="filter-search"><span class="sr-only">Suche</span>
+      <input type="search" name="q" value="<%= q %>" placeholder="Suchen: Name, Tag oder Zutat" autocomplete="off">
+    </label>
+    <label><span class="sr-only">Sortierung</span>
+      <select name="sort" data-autosubmit>
+        <% Object.entries(sorts).forEach(function ([key, label]) { %>
+          <option value="<%= key %>" <%= sort === key ? 'selected' : '' %>><%= label %></option>
+        <% }) %>
+      </select>
+    </label>
+    <% if (tag) { %><input type="hidden" name="tag" value="<%= tag %>"><% } %>
+    <div class="filter-actions">
+      <button type="submit" class="btn">Suchen</button>
+      <% if (q || tag || sort !== 'name') { %><a class="btn btn-ghost" href="<%= base %>/recipes">Zurücksetzen</a><% } %>
+    </div>
+  </form>
+
+  <% if (tags.length) { %>
+    <div class="chips" aria-label="Nach Tag filtern">
+      <a class="chip-link <%= !tag ? 'active' : '' %>" href="<%= base %>/recipes?<%= new URLSearchParams(Object.assign({}, q ? { q } : {}, sort !== 'name' ? { sort } : {})) %>">Alle</a>
+      <% tags.forEach(function (t) { const on = tag.toLowerCase() === t.name.toLowerCase(); %>
+        <a class="chip-link <%= on ? 'active' : '' %>" href="<%= base %>/recipes?<%= new URLSearchParams(Object.assign({}, q ? { q } : {}, sort !== 'name' ? { sort } : {}, on ? {} : { tag: t.name })) %>"><%= t.name %> <span class="chip-count"><%= t.count %></span></a>
+      <% }) %>
+    </div>
+  <% } %>
+
+  <% if (!recipes.length) { %>
+    <section class="card empty center"><p class="muted">Keine Rezepte gefunden.</p></section>
+  <% } else { %>
+    <ul class="recipe-grid">
+      <% recipes.forEach(function (r) { %>
+        <li>
+          <a class="card recipe-card" href="<%= base %>/recipes/<%= r.id %>">
+            <strong class="recipe-name"><%= r.name %></strong>
+            <span class="muted small"><%= r.servings %> Portionen · <%= r.ingredient_count %> Zutaten<% if (r.last_planned) { %> · zuletzt <%= fmt.date(r.last_planned) %><% } %></span>
+            <% if (fmt.tagList(r.tags).length) { %>
+              <span class="tags"><% fmt.tagList(r.tags).forEach(function (t) { %><span class="badge"><%= t %></span> <% }) %></span>
+            <% } %>
+          </a>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+<% } %>
+<%- include('../partials/footer') %>

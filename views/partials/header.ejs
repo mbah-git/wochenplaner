@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title><%= title %> · WochenPlaner</title>
+  <link rel="icon" href="<%= base %>/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="<%= base %>/static/css/style.css">
+  <link rel="manifest" href="<%= base %>/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="<%= base %>/static/icons/apple-touch-icon.png">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1a1d1b" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="WochenPlaner">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+</head>
+<%
+  const tabs = currentUser ? [
+    { href: '/plan', label: 'Wochenplan', icon: 'M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7Zm-2 8h14v10H5V10Zm2 2v2h2v-2H7Zm4 0v2h2v-2h-2Zm4 0v2h2v-2h-2Zm-8 4v2h2v-2H7Zm4 0v2h2v-2h-2Z' },
+    { href: '/recipes', label: 'Rezepte', icon: 'M6 2h11a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm1 2v16h10V4H7Zm2 3h6v2H9V7Zm0 4h6v2H9v-2Zm0 4h4v2H9v-2Z' },
+    { href: '/shopping', label: 'Einkauf', icon: 'M7 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM1 2v2h2l3.6 7.6-1.4 2.4A2 2 0 0 0 7 17h12v-2H7.4l1.1-2h7.5a2 2 0 0 0 1.7-1l3.6-6.5A1 1 0 0 0 20.4 4H5.2l-.9-2H1Z' },
+  ] : [];
+  if (currentUser && currentUser.role === 'admin') tabs.push({ href: '/admin/users', label: 'Admin', icon: 'M12 1 3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4Zm0 6a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 8c2.7 0 5 1.2 5.6 2.9A8.9 8.9 0 0 1 12 21a8.9 8.9 0 0 1-5.6-3.1C7 16.2 9.3 15 12 15Z' });
+  const accountIcon = 'M12 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 12c5.3 0 8 2.7 8 5v3H4v-3c0-2.3 2.7-5 8-5Z';
+  const isActive = (href) => path === href || path.startsWith(href + '/');
+%>
+<body data-base="<%= base %>" class="<%= currentUser ? 'has-tabs' : '' %>">
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="<%= base %>/">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7Zm-2 8h14v10H5V10Zm2 2v2h2v-2H7Zm4 0v2h2v-2h-2Zm4 0v2h2v-2h-2Zm-8 4v2h2v-2H7Zm4 0v2h2v-2h-2Z"/></svg>
+        WochenPlaner
+      </a>
+      <% if (currentUser) { %>
+        <nav class="nav" aria-label="Hauptnavigation">
+          <% tabs.forEach(function (t) { %>
+            <a href="<%= base %><%= t.href %>" class="<%= isActive(t.href) ? 'active' : '' %>"><%= t.label === 'Einkauf' ? 'Einkaufsliste' : t.label %></a>
+          <% }) %>
+        </nav>
+        <div class="user-menu">
+          <button type="button" id="installBtn" class="btn btn-sm" hidden>App installieren</button>
+          <a class="user-name <%= isActive('/account') ? 'active' : '' %>" href="<%= base %>/account" title="<%= currentUser.email %> · <%= currentUser.household_name %>"><%= currentUser.name %></a>
+          <form method="post" action="<%= base %>/logout">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-ghost btn-sm">Abmelden</button>
+          </form>
+        </div>
+      <% } else { %>
+        <div class="user-menu">
+          <button type="button" id="installBtn" class="btn btn-sm" hidden>App installieren</button>
+        </div>
+      <% } %>
+    </div>
+  </header>
+  <% if (currentUser) { %>
+    <nav class="tabbar" aria-label="Navigation">
+      <% tabs.concat([{ href: '/account', label: 'Konto', icon: accountIcon }]).forEach(function (t) { %>
+        <a href="<%= base %><%= t.href %>" class="<%= isActive(t.href) ? 'active' : '' %>">
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="<%= t.icon %>"/></svg>
+          <span><%= t.label %></span>
+        </a>
+      <% }) %>
+    </nav>
+  <% } %>
+  <main class="container main">
+    <% if (flash) { %>
+      <div class="alert alert-<%= flash.type %>" role="status"><%= flash.message %></div>
+    <% } %>

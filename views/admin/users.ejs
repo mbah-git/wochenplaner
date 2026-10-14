@@ -1,0 +1,84 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <h1>Benutzerverwaltung</h1>
+    <p class="muted"><%= users.length %> Benutzer in <%= households.length %> Haushalten</p>
+  </div>
+  <div class="page-actions">
+    <form method="post" action="<%= base %>/admin/test-mail">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn" title="Schickt eine Test-E-Mail an <%= currentUser.email %>">Test-E-Mail senden</button>
+    </form>
+    <a class="btn" href="<%= base %>/admin/password">Passwort ändern</a>
+    <a class="btn btn-primary" href="<%= base %>/admin/users/new">+ Neuen Benutzer erstellen</a>
+  </div>
+</div>
+
+<section class="card table-card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Haushalt</th>
+        <th>Rolle</th>
+        <th>Status</th>
+        <th>Registriert</th>
+        <th>Letzter Login</th>
+        <th><span class="sr-only">Aktionen</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% users.forEach(function (u) { const self = u.id === currentUser.id; %>
+        <tr class="<%= u.is_active ? '' : 'inactive' %>">
+          <td data-label="Name">
+            <strong><%= u.name %></strong><% if (self) { %> <span class="muted small">(du)</span><% } %>
+            <div class="muted small"><%= u.email %></div>
+          </td>
+          <td data-label="Haushalt"><%= u.household_name %></td>
+          <td data-label="Rolle"><span class="badge <%= u.role === 'admin' ? 'badge-accent' : '' %>"><%= u.role === 'admin' ? 'Admin' : 'Benutzer' %></span></td>
+          <td data-label="Status"><span class="badge <%= u.is_active ? 'badge-ok' : 'badge-warn' %>"><%= u.is_active ? 'aktiv' : 'gesperrt' %></span></td>
+          <td data-label="Registriert"><%= fmt.date(u.created_at) %></td>
+          <td data-label="Letzter Login"><%= fmt.date(u.last_login_at) %></td>
+          <td class="actions-cell"><div class="actions">
+            <% if (self) { %>
+              <a class="btn btn-sm" href="<%= base %>/admin/password?user=<%= u.id %>">Passwort</a>
+            <% } else { %>
+              <form method="post" action="<%= base %>/admin/users/<%= u.id %>/toggle-active">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-sm"><%= u.is_active ? 'Sperren' : 'Entsperren' %></button>
+              </form>
+              <a class="btn btn-sm" href="<%= base %>/admin/password?user=<%= u.id %>">Passwort</a>
+              <form method="post" action="<%= base %>/admin/users/<%= u.id %>/toggle-admin" data-confirm="Rolle von <%= u.name %> wirklich ändern?">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-sm"><%= u.role === 'admin' ? 'Admin entziehen' : 'Zum Admin' %></button>
+              </form>
+              <form method="post" action="<%= base %>/admin/users/<%= u.id %>/delete" data-confirm="<%= u.name %> endgültig löschen? Ist er das letzte Mitglied des Haushalts, werden auch dessen Rezepte gelöscht.">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
+              </form>
+            <% } %>
+          </div></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>
+
+<h2 class="section-head">Haushalte</h2>
+<section class="card table-card">
+  <table class="table">
+    <thead>
+      <tr><th>Name</th><th class="num">Mitglieder</th><th class="num">Rezepte</th></tr>
+    </thead>
+    <tbody>
+      <% households.forEach(function (h) { %>
+        <tr>
+          <td data-label="Name"><strong><%= h.name %></strong></td>
+          <td data-label="Mitglieder" class="num"><%= h.member_count %></td>
+          <td data-label="Rezepte" class="num"><%= h.recipe_count %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>
+<%- include('../partials/footer') %>

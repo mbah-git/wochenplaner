@@ -1,0 +1,70 @@
+<%- include('../partials/header') %>
+<section class="card narrow">
+  <h1>Konto</h1>
+  <p class="muted"><%= currentUser.name %> · <%= currentUser.email %></p>
+
+  <hr class="divider">
+  <h2 class="section-title">Haushalt</h2>
+  <p class="muted small">Alle Mitglieder eines Haushalts teilen Rezepte, Wochenplan und Einkaufsliste.</p>
+
+  <form method="post" action="<%= base %>/account/household/rename" class="form form-inline">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="grow">Name
+      <input type="text" name="name" value="<%= household.name %>" required maxlength="100">
+    </label>
+    <button type="submit" class="btn">Umbenennen</button>
+  </form>
+
+  <h3 class="sub-title">Mitglieder (<%= members.length %>)</h3>
+  <ul class="list members">
+    <% members.forEach(function (m) { %>
+      <li><div><strong><%= m.name %></strong><span class="muted small"><%= m.email %></span></div>
+        <% if (m.id === currentUser.id) { %><span class="badge badge-accent">du</span><% } %></li>
+    <% }) %>
+  </ul>
+
+  <h3 class="sub-title">Jemanden einladen</h3>
+  <p class="muted small">Gib diesen Code weiter. Wer ihn bei der Registrierung oder hier unter „Haushalt beitreten“ eingibt, gehört danach zu eurem Haushalt.</p>
+  <div class="invite">
+    <code class="invite-code" id="inviteCode"><%= household.invite_code %></code>
+    <button type="button" class="btn btn-sm" data-copy="#inviteCode">Kopieren</button>
+  </div>
+  <% if (inviteLink) { %>
+    <div class="invite">
+      <input type="text" readonly value="<%= inviteLink %>" id="inviteLink" class="invite-link" aria-label="Einladungslink">
+      <button type="button" class="btn btn-sm" data-copy="#inviteLink">Link kopieren</button>
+      <button type="button" class="btn btn-sm" data-share="#inviteLink" hidden>Teilen</button>
+    </div>
+  <% } %>
+  <form method="post" action="<%= base %>/account/household/new-code" data-confirm="Neuen Code erstellen? Der bisherige Code funktioniert danach nicht mehr.">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit" class="btn btn-ghost btn-sm">Neuen Code erstellen</button>
+  </form>
+
+  <details class="details">
+    <summary>Anderem Haushalt beitreten</summary>
+    <form method="post" action="<%= base %>/account/household/join" class="form" data-confirm="Wirklich wechseln? Bist du das letzte Mitglied, nimmst du deine Rezepte mit, der bisherige Wochenplan und die Einkaufsliste gehen verloren.">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Einladungscode
+        <input type="text" name="code" required maxlength="12" autocomplete="off" autocapitalize="characters" class="code-input" placeholder="z. B. K7QM4RTX">
+      </label>
+      <button type="submit" class="btn btn-primary">Beitreten</button>
+    </form>
+    <% if (members.length > 1) { %>
+      <form method="post" action="<%= base %>/account/household/leave" data-confirm="Haushalt wirklich verlassen? Rezepte und Plan bleiben bei den anderen Mitgliedern.">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-danger btn-sm">Haushalt verlassen</button>
+      </form>
+    <% } %>
+  </details>
+
+  <hr class="divider">
+  <h2 class="section-title">Passwort</h2>
+  <p><a class="btn" href="<%= base %>/account/password">Passwort ändern</a></p>
+
+  <form method="post" action="<%= base %>/logout" class="logout-mobile">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit" class="btn btn-block">Abmelden</button>
+  </form>
+</section>
+<%- include('../partials/footer') %>

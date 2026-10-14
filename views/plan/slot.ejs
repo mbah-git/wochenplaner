@@ -1,0 +1,41 @@
+<%- include('../partials/header') %>
+<section class="card narrow wide-narrow">
+  <p class="crumb"><a href="<%= backUrl %>">← Wochenplan</a></p>
+  <h1><%= target.slot.label %></h1>
+  <p class="muted"><%= dateLabel %></p>
+  <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+  <form method="post" action="<%= base %>/plan/<%= target.iso %>/<%= target.slot.key %>" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Rezept
+      <% if (recipes.length > 8) { %>
+        <input type="search" class="select-filter" data-filter-select="#recipeSelect" placeholder="Rezept suchen …" autocomplete="off" aria-label="Rezepte filtern">
+      <% } %>
+      <select name="recipe_id" id="recipeSelect" <%= recipes.length > 8 ? 'size=8' : '' %>>
+        <option value="">– kein Rezept –</option>
+        <% recipes.forEach(function (r) { %>
+          <option value="<%= r.id %>" data-servings="<%= r.servings %>" <%= Number(values.recipe_id) === r.id ? 'selected' : '' %>><%= r.name %><%= r.tags ? ' · ' + r.tags : '' %></option>
+        <% }) %>
+      </select>
+    </label>
+    <label>Portionen <span class="hint">leer = wie im Rezept</span>
+      <input type="number" name="servings" value="<%= values.servings || '' %>" min="1" max="50" inputmode="numeric" id="servingsInput">
+    </label>
+    <label>Freitext <span class="hint">statt eines Rezepts (z. B. „Auswärts essen“) oder als Notiz dazu</span>
+      <input type="text" name="note" value="<%= values.note || '' %>" maxlength="200" placeholder="z. B. Resten, Pizza bestellen, mit Salat">
+    </label>
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="<%= backUrl %>">Abbrechen</a>
+      <button type="submit" class="btn btn-primary">Speichern</button>
+    </div>
+  </form>
+  <% if (entry) { %>
+    <form method="post" action="<%= base %>/plan/<%= target.iso %>/<%= target.slot.key %>/delete" class="delete-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn-danger btn-sm">Mahlzeit entfernen</button>
+    </form>
+  <% } %>
+  <% if (!recipes.length) { %>
+    <p class="muted small">Noch keine Rezepte vorhanden. <a href="<%= base %>/recipes/new">Rezept anlegen</a></p>
+  <% } %>
+</section>
+<%- include('../partials/footer') %>
